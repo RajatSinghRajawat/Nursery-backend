@@ -10,6 +10,10 @@ const userSchema = new mongoose.Schema(
     firstName: {
       type: String,
     },
+    // Backward compatibility for older code that used `name`
+    name: {
+      type: String,
+    },
     email: {
       type: String,
       // required: true,
@@ -59,7 +63,8 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      defult: 0
+      default: "user",
+      enum: ["user", "admin"],
     },
 
     token: {
