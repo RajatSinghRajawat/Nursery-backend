@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nursery-Backend API Docs</title>
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 24px;
+        color: #111;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 20px;
+      }
+      .note {
+        background: #f6f6f6;
+        border: 1px solid #e7e7e7;
+        padding: 12px 14px;
+        border-radius: 8px;
+        margin: 12px 0;
+      }
+      .section {
+        margin-top: 18px;
+        padding-top: 8px;
+        border-top: 1px solid #eee;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+      th, td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid #eee;
+        vertical-align: top;
+      }
+      th {
+        background: #fafafa;
+        font-weight: 600;
+      }
+      pre {
+        background: #0b1220;
+        color: #d7e3ff;
+        padding: 12px;
+        border-radius: 8px;
+        overflow: auto;
+        white-space: pre;
+        margin: 10px 0 0;
+      }
+      .row-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+      button.copy {
+        border: 1px solid #ddd;
+        background: #fff;
+        padding: 6px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      code.inline {
+        background: #f1f1f1;
+        padding: 2px 6px;
+        border-radius: 6px;
+      }
+      .method {
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        border: 1px solid #ddd;
+        background: #fff;
+        display: inline-block;
+        min-width: 70px;
+        text-align: center;
+      }
+      .method.get { border-color: #9bd4ff; background: #eef8ff; color: #0b4a6e; }
+      .method.post { border-color: #b7f0c8; background: #f0fff3; color: #145b23; }
+      .method.put { border-color: #ffe3a3; background: #fff8e8; color: #6b4b00; }
+      .method.del { border-color: #ffb5b5; background: #fff2f2; color: #6b0000; }
+      .muted { color: #555; }
+    </style>
+  </head>
+  <body>
+    <h1>Nursery-Backend API Docs</h1>
+
+    <div class="note">
+      <div><b>Base URL:</b> <code class="inline">http://localhost:3000</code> (your port may differ based on <code class="inline">PORT</code>)</div>
+      <div style="margin-top: 6px;">
+        <b>Auth:</b> Protected routes accept JWT token either via:
+        <div class="muted">1) Header: <code class="inline">Authorization: Bearer &lt;token&gt;</code></div>
+        <div class="muted">2) Cookie: <code class="inline">token=&lt;token&gt;</code></div>
+      </div>
+      <div style="margin-top: 6px;">
+        <b>Error response:</b> <code class="inline">{ "message": "..." }</code>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 style="font-size: 16px; margin: 0 0 8px;">Auth APIs</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Route</th>
+            <th>What it does</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="method post">POST</span>
+              <div><code class="inline">http://localhost:3000/auth/register</code></div>
+            </td>
+            <td>
+              Creates user and returns token + sets cookie <code class="inline">token</code>.
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="copy" data-target="auth-register-body">Copy body (JSON)</button>
+              </div>
+              <pre id="auth-register-body" data-code="1">{
+  "name": "Rajat Singh",
+  "email": "rajat@example.com",
+  "password": "your_password_here"
+}</pre>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <span class="method post">POST</span>
+              <div><code class="inline">http://localhost:3000/auth/login</code></div>
+            </td>
+            <td>
+              Logs in user and returns token + sets cookie <code class="inline">token</code>.
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="copy" data-target="auth-login-body">Copy body (JSON)</button>
+              </div>
+              <pre id="auth-login-body" data-code="1">{
+  "email": "rajat@example.com",
+  "password": "your_password_here"
+}</pre>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <span class="method get">GET</span>
+              <div><code class="inline">http://localhost:3000/auth/me</code></div>
+            </td>
+            <td>Returns current user (requires auth token).</td>
+            <td>
+              <div class="row-actions">
+                <button class="copy" data-target="auth-me-header">Copy header</button>
+              </div>
+              <pre id="auth-me-header" data-code="1">Authorization: Bearer &lt;token&gt;</pre>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <span class="method post">POST</span>
+              <div><code class="inline">http://localhost:3000/auth/logout</code></div>
+            </td>
+            <td>Clears auth cookie and logs out.</td>
+            <td>
+              <div class="row-actions">
+                <button class="copy" data-target="auth-logout-header">Copy header</button>
+              </div>
+              <pre id="auth-logout-header" data-code="1">Authorization: Bearer &lt;token&gt;</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2 style="font-size: 16px; margin: 0 0 8px;">Products APIs</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Route</th>
+            <th>What it does</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="method get">GET</span>
+              <div><code class="inline">http://localhost:3000/products</code></div>
+            </td>
+            <td class="muted">
+              Query params: <code class="inline">search</code>, <code class="inline">categoryId</code>, <code class="inline">active</code>, <code class="inline">minPrice</code>, <code class="inline">maxPrice</code>, <code class="inline">page</code>, <code class="inline">limit</code>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="copy" data-target="products-list-url">Copy URL</button>
+              </div>
+              <pre id="products-list-url" data-code="1">http://localhost:3000/products?search=&amp;categoryId=&amp;active=&amp;minPrice=&amp;maxPrice=&amp;page=1&amp;limit=20</pre>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <span class="method get">GET</span>
+              <div><code class="inline">http://localhost:3000/products/:id</code></div>
+            </td>
+            <td>Get a product by Mongo ObjectId.</td>
+            <td>
+              <div class="row-actions">
+                <button class="copy" data-target="product-get-url">Copy URL</button>
+              </div>
+              <pre id="product-get-url" data-code="1">http://localhost:3000/products/&lt;productId&gt;</pre>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <span class="method post">POST</span>
+              <div><code class="inline">http://localhost:3000/products/add</code></div>
+            </td>
+            <td>
+              Admin-only. Creates product.
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="copy" data-target="admin-auth-header">Copy auth header</button>
+                <button class="copy" data-target="product-add-body">Copy body (JSON)</button>
+              </div>
+              <pre id="admin-auth-header" data-code="1">Authorization: Bearer &lt;adminToken&gt;</pre>
+              <pre id="product-add-body" data-code="1">{
+  "name": "Product name",
+  "price": 100,
+  "discount": 10,
+  "soldBy": "Company/Dealer",
+  "responseRate": 80,
+  "categoryId": "60f...ObjectId",
+  "description": "Short description",
+  "image": ["https://example.com/img1.jpg", "https://example.com/img2.jpg"],
+  "stock": 25,
+  "isActive": true
+}</pre>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <span class="method put">PUT</span>
+              <div><code class="inline">http://localhost:3000/products/:id</code></div>
+            </td>
+            <td>
+              Admin-only. Updates only fields you send.
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="copy" data-target="product-update-url">Copy URL</button>
+                <button class="copy" data-target="admin-auth-header-2">Copy auth header</button>
+                <button class="copy" data-target="product-update-body">Copy body (JSON)</button>
+              </div>
+              <pre id="product-update-url" data-code="1">http://localhost:3000/products/&lt;productId&gt;</pre>
+              <pre id="admin-auth-header-2" data-code="1">Authorization: Bearer &lt;adminToken&gt;</pre>
+              <pre id="product-update-body" data-code="1">{
+  "price": 120,
+  "description": "Updated description",
+  "stock": 18
+}</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2 style="font-size: 16px; margin: 0 0 8px;">Static Uploads</h2>
+      <div class="note">
+        Backend me <code class="inline">/uploads</code> ko <code class="inline">express.static</code> se serve kiya ja raha hai.
+        File name server ki <code class="inline">uploads</code> folder me hoga.
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Route</th>
+            <th>What it does</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="method get">GET</span>
+              <div><code class="inline">http://localhost:3000/uploads/&lt;filename&gt;</code></div>
+            </td>
+            <td>Uploaded file ko serve karta hai (static).</td>
+            <td>
+              <div class="row-actions">
+                <button class="copy" data-target="uploads-file-url">Copy URL</button>
+              </div>
+              <pre id="uploads-file-url" data-code="1">http://localhost:3000/uploads/sample.jpg</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2 style="font-size: 16px; margin: 0 0 8px;">Sales APIs</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Route</th>
+            <th>What it does</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="method post">POST</span>
+              <div><code class="inline">http://localhost:3000/sales</code></div>
+            </td>
+            <td>
+              Admin-only. Creates sale and reduces product stock.
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="copy" data-target="sales-create-header">Copy auth header</button>
+                <button class="copy" data-target="sales-create-body">Copy body (JSON)</button>
+              </div>
+              <pre id="sales-create-header" data-code="1">Authorization: Bearer &lt;adminToken&gt;</pre>
+              <pre id="sales-create-body" data-code="1">{
+  "productId": "60f...ObjectId",
+  "quantity": 3
+}</pre>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <span class="method get">GET</span>
+              <div><code class="inline">http://localhost:3000/sales</code></div>
+            </td>
+            <td class="muted">
+              Query params: <code class="inline">page</code>, <code class="inline">limit</code>, <code class="inline">from</code>, <code class="inline">to</code>, <code class="inline">productId</code>, <code class="inline">adminId</code>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="copy" data-target="sales-list-url">Copy URL</button>
+                <button class="copy" data-target="sales-auth-header">Copy auth header</button>
+              </div>
+              <pre id="sales-list-url" data-code="1">http://localhost:3000/sales?page=1&amp;limit=20&amp;from=&amp;to=&amp;productId=&amp;adminId=</pre>
+              <pre id="sales-auth-header" data-code="1">Authorization: Bearer &lt;adminToken&gt;</pre>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <span class="method get">GET</span>
+              <div><code class="inline">http://localhost:3000/sales/:id</code></div>
+            </td>
+            <td>Get sale by id (ObjectId).</td>
+            <td>
+              <div class="row-actions">
+                <button class="copy" data-target="sales-get-url">Copy URL</button>
+                <button class="copy" data-target="sales-get-header">Copy auth header</button>
+              </div>
+              <pre id="sales-get-url" data-code="1">http://localhost:3000/sales/&lt;saleId&gt;</pre>
+              <pre id="sales-get-header" data-code="1">Authorization: Bearer &lt;adminToken&gt;</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2 style="font-size: 16px; margin: 0 0 8px;">Admin APIs (partial)</h2>
+      <div class="note">
+        <div><b>Important:</b> In your current repo, <code class="inline">src/controllers/admin.js</code> looks empty, and the route file references <code class="inline">superAdminOnly</code> which is not present there.</div>
+        <div style="margin-top: 8px;">So for <code class="inline">/admin/*</code> endpoints, request/response details are not guaranteed, and the server may skip loading this route file (due to runtime error during route require).</div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Route</th>
+            <th>Auth</th>
+            <th>Docs</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="method post">POST</span> <div><code class="inline">http://localhost:3000/admin/register</code></div></td>
+            <td class="muted">public</td>
+            <td class="muted">Implementation body not available (controller empty).</td>
+          </tr>
+          <tr>
+            <td><span class="method post">POST</span> <div><code class="inline">http://localhost:3000/admin/login</code></div></td>
+            <td class="muted">public</td>
+            <td class="muted">Implementation body not available (controller empty).</td>
+          </tr>
+          <tr>
+            <td><span class="method get">GET</span> <div><code class="inline">http://localhost:3000/admin</code></div></td>
+            <td class="muted">superadmin</td>
+            <td class="muted">Controller implementation missing.</td>
+          </tr>
+          <tr>
+            <td><span class="method get">GET</span> <div><code class="inline">http://localhost:3000/admin/:id</code></div></td>
+            <td class="muted">unknown</td>
+            <td class="muted">Controller implementation missing.</td>
+          </tr>
+          <tr>
+            <td><span class="method put">PUT</span> <div><code class="inline">http://localhost:3000/admin/:id</code></div></td>
+            <td class="muted">unknown</td>
+            <td class="muted">Controller implementation missing.</td>
+          </tr>
+          <tr>
+            <td><span class="method del">DELETE</span> <div><code class="inline">http://localhost:3000/admin/:id</code></div></td>
+            <td class="muted">superadmin</td>
+            <td class="muted">Controller implementation missing.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      // Lightweight copy helper (no dependencies).
+      document.addEventListener("click", async (e) => {
+        const btn = e.target.closest("button.copy");
+        if (!btn) return;
+        const targetId = btn.getAttribute("data-target");
+        const el = document.getElementById(targetId);
+        if (!el) return;
+        const text = el.textContent || "";
+        try {
+          await navigator.clipboard.writeText(text);
+          const old = btn.textContent;
+          btn.textContent = "Copied";
+          setTimeout(() => (btn.textContent = old), 900);
+        } catch (err) {
+          alert("Copy failed. Select & copy manually.");
+        }
+      });
+    </script>
+  </body>
+</html>
+

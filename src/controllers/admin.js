@@ -1,0 +1,231 @@
+
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const Admin = require("../models/admin");
+
+/* TOKEN */
+const generateToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
+};
+exports.registerAdmin = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    const exists = await Admin.findOne({ email });
+    if (exists) {
+      return res.status(400).json({ message: "Admin already exists" });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+
+    const admin = await Admin.create({
+      name,
+      email,
+      password: hash,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Admin Registered",
+      token: generateToken(admin._id, admin.role),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/* LOGIN */
+exports.loginAdmin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const admin = await Admin.findOne({ email });
+
+    if (admin && (await bcrypt.compare(password, admin.password))) {
+
+      admin.lastLoginAt = new Date();
+      await admin.save();
+
+      res.json({
+        success: true,
+        message: "Login Success",
+        token: generateToken(admin._id, admin.role),
+      });
+
+    } else {
+      res.status(401).json({ message: "Invalid credentials" });
+    }
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/* GET ALL ADMINS */
+exports.getAllAdmins = async (req, res) => {
+  console.log("Fetching all admins - requested by:",);
+  try {
+    const admins = await Admin.find().select("-password");
+
+    res.json({
+      success: true,
+      count: admins.length,
+      data: admins,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/* GET SINGLE ADMIN */
+exports.getAdminById = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.params.id).select("-password");
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    res.json({ success: true, data: admin });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/* UPDATE */
+exports.updateAdmin = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.params.id);
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    // 🔐 Only self or superadmin
+    if (req.admin.id !== admin.id && req.admin.role !== "superadmin") {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    admin.name = req.body.name || admin.name;
+    admin.email = req.body.email || admin.email;
+
+    if (req.body.password) {
+      admin.password = await bcrypt.hash(req.body.password, 10);
+    }
+
+    await admin.save();
+
+    res.json({
+      success: true,
+      message: "Updated successfully",
+      data: admin,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/* DELETE */
+exports.deleteAdmin = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.params.id);
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    // 🔥 Only superadmin can delete
+    if (req.admin.role !== "superadmin") {
+      return res.status(403).json({ message: "Only SuperAdmin can delete" });
+    }
+
+    await admin.deleteOne();
+
+    res.json({
+      success: true,
+      message: "Deleted successfully",
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const admin = await Admin.findOne({ email: req.body.email });
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    // 🔥 Generate token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    // 🔐 Hash token (DB me safe)
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    admin.resetPasswordToken = hashedToken;
+    admin.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 min
+
+    await admin.save();
+
+    // 🔗 Reset link
+    const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
+
+    res.json({
+      success: true,
+      message: "Reset link generated",
+      resetUrl,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    // 🔐 Hash token
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    const admin = await Admin.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!admin) {
+      return res.status(400).json({
+        message: "Invalid or expired token",
+      });
+    }
+
+    // 🔥 Update password
+    admin.password = await bcrypt.hash(password, 10);
+
+    admin.resetPasswordToken = undefined;
+    admin.resetPasswordExpire = undefined;
+
+    await admin.save();
+
+    res.json({
+      success: true,
+      message: "Password reset successful",
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

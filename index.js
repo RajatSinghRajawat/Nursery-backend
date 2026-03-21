@@ -5,17 +5,15 @@ const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
 const { connectDb } = require("./src/config/db");
+const userRoutes = require("./src/routes/authRoutes");
+const adminRoutes = require("./src/routes/admin");
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-const clientOrigin = process.env.CLIENT_ORIGIN || "*";
 
 app.use(
-  cors({
-    origin: clientOrigin === "*" ? "*" : [clientOrigin],
-    credentials: true,
-  })
+  cors()
 );
 app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
@@ -25,8 +23,13 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
 
-connectDb().then(() => {
-  app.listen(port, () => {
-    console.log(`API listening at http://localhost:${port}`);
-  });
+connectDb()
+
+app.use("/api", userRoutes);
+app.use("/api/admin" , adminRoutes)
+
+
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });

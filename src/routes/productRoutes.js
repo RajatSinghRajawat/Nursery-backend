@@ -1,24 +1,18 @@
-// const express = require("express");
-// const authMiddleware = require("../middleware/authMiddleware");
-// const { requireRole } = require("../middleware/requireRole");
-// const {
-//   listProducts,
-//   getProduct,
-//   createProduct,
-//   updateProduct,
-//   deleteProduct,
-//   addReview,
-// } = require("../controllers/productController");
+const express = require('express');
+const router = express.Router();
+const authMiddleware = require("../middleware/authMiddleware");
+const { requireRole } = require("../middleware/requireRole");
+const { productadd, listProducts, getProduct, updateProduct } = require('../controllers/productController');
 
-// const router = express.Router();
 
-// router.get("/", listProducts);
-// router.get("/:id", getProduct);
-// router.post("/:id/reviews", authMiddleware, addReview);
 
-// router.post("/", authMiddleware, requireRole("admin"), createProduct);
-// router.patch("/:id", authMiddleware, requireRole("admin"), updateProduct);
-// router.delete("/:id", authMiddleware, requireRole("admin"), deleteProduct);
 
-// module.exports = router;
+// public read
+router.get("/", listProducts);
+router.get("/:id", getProduct);
 
+// admin write
+router.post('/add' , authMiddleware, requireRole(["admin", "superadmin"]), productadd);
+router.put("/:id", authMiddleware, requireRole(["admin", "superadmin"]), updateProduct);
+
+module.exports = router;

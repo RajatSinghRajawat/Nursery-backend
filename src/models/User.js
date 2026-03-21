@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema(
   {
     userId: {
       type: String
-      
+
 
     },
     firstName: {
@@ -61,11 +61,7 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    role: {
-      type: String,
-      default: "user",
-      enum: ["user", "admin"],
-    },
+
 
     token: {
       type: String,
