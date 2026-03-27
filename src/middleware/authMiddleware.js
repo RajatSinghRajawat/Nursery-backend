@@ -24,7 +24,11 @@ const authMiddleware = (req, res, next) => {
 
     const decoded = jwt.verify(token, secret);
 
-    req.user = { id: decoded.id, type: decoded.type || "user" };
+    req.user = {
+      id: decoded.id,
+      type: decoded.type || "user",
+      role: decoded.role,
+    };
 
     next();
   } catch (error) {

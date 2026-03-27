@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const asyncHandler = require("../utils/asyncHandler");
 const Sale = require("../models/salemodel");
 const Product = require("../models/Productsmodel");
+const Admin = require("../models/admin");
 
 // POST /sales  (admin)
 // body: { productId, quantity }
@@ -60,16 +61,13 @@ const createSale = asyncHandler(async (req, res) => {
   res.status(201).json(sale);
 });
 
-// GET /sales?page=&limit=&from=&to=&productId=&adminId=
-const listSales = asyncHandler(async (req, res) => {
+function buildSalesFilter(query = {}, user = {}) {
   const {
-    page = "1",
-    limit = "20",
     from,
     to,
     productId,
     adminId,
-  } = req.query || {};
+  } = query || {};
 
   const filter = {};
 
@@ -91,11 +89,27 @@ const listSales = asyncHandler(async (req, res) => {
     filter.adminId = String(adminId);
   }
 
+  const isSuperAdmin = user?.role === "superadmin";
+  if (!isSuperAdmin && user?.id && mongoose.Types.ObjectId.isValid(String(user.id))) {
+    filter.adminId = String(user.id);
+  }
+
   if (from || to) {
     filter.createdAt = {};
     if (from) filter.createdAt.$gte = new Date(String(from));
     if (to) filter.createdAt.$lte = new Date(String(to));
   }
+  return filter;
+}
+
+// GET /sales?page=&limit=&from=&to=&productId=&adminId=
+const listSales = asyncHandler(async (req, res) => {
+  const {
+    page = "1",
+    limit = "20",
+  } = req.query || {};
+
+  const filter = buildSalesFilter(req.query, req.user);
 
   const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
   const limitNum = Math.min(100, Math.max(1, parseInt(String(limit), 10) || 20));
@@ -112,6 +126,56 @@ const listSales = asyncHandler(async (req, res) => {
   ]);
 
   res.json({ items, page: pageNum, limit: limitNum, total });
+});
+
+// GET /sales/summary?from=&to=&productId=&adminId=
+const salesSummary = asyncHandler(async (req, res) => {
+  const filter = buildSalesFilter(req.query, req.user);
+
+  const grouped = await Sale.aggregate([
+    { $match: filter },
+    {
+      $group: {
+        _id: "$adminId",
+        totalQuantity: { $sum: { $ifNull: ["$quantity", 0] } },
+        totalAmount: { $sum: { $ifNull: ["$totalAmount", 0] } },
+        saleCount: { $sum: 1 },
+      },
+    },
+    { $sort: { totalAmount: -1 } },
+  ]);
+
+  const adminIds = grouped.map((row) => row._id).filter(Boolean);
+  const admins = await Admin.find({ _id: { $in: adminIds } }).select("name email role");
+  const adminById = new Map(admins.map((a) => [String(a._id), a]));
+
+  const byAdmin = grouped.map((row) => {
+    const admin = adminById.get(String(row._id));
+    return {
+      adminId: row._id,
+      name: admin?.name || "",
+      email: admin?.email || "Unknown",
+      role: admin?.role || "",
+      totalQuantity: Number(row.totalQuantity || 0),
+      totalAmount: Number(row.totalAmount || 0),
+      saleCount: Number(row.saleCount || 0),
+    };
+  });
+
+  const totals = byAdmin.reduce(
+    (acc, row) => {
+      acc.totalQuantity += row.totalQuantity;
+      acc.totalAmount += row.totalAmount;
+      acc.saleCount += row.saleCount;
+      return acc;
+    },
+    { totalQuantity: 0, totalAmount: 0, saleCount: 0 }
+  );
+
+  res.json({
+    totals,
+    byAdmin,
+  });
 });
 
 // GET /sales/:id
@@ -136,4 +200,4 @@ const getSale = asyncHandler(async (req, res) => {
   res.json(sale);
 });
 
-module.exports = { createSale, listSales, getSale };
+module.exports = { createSale, listSales, getSale, salesSummary };

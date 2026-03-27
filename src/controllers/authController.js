@@ -10,7 +10,7 @@ const generateToken = (userId) => {
 
   const expiresIn = process.env.JWT_EXPIRES_IN || "7d";
 
-  return jwt.sign({ id: userId }, secret, { expiresIn });
+  return jwt.sign({ id: String(userId), type: "user" }, secret, { expiresIn });
 };
 
 const register = async (req, res) => {

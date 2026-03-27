@@ -1,35 +1,57 @@
-
+const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/admin");
 
-/* TOKEN */
 const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
+  return jwt.sign(
+    { id: String(id), role, type: "admin" },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 };
 exports.registerAdmin = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body || {};
+    const emailNorm = email ? String(email).toLowerCase().trim() : "";
 
-    const exists = await Admin.findOne({ email });
+    if (!name || !emailNorm || !password) {
+      return res.status(400).json({ message: "Name, email and password are required" });
+    }
+
+    const exists = await Admin.findOne({ email: emailNorm });
     if (exists) {
       return res.status(400).json({ message: "Admin already exists" });
     }
 
     const hash = await bcrypt.hash(password, 10);
 
+    // Only superadmin (when using protected route) can set admin role.
+    // Public /register bootstrap defaults to "admin".
+    const canSetRole = req.admin && req.admin.role === "superadmin";
+    const normalizedRole = role ? String(role).trim().toLowerCase() : "admin";
+    const roleToSet =
+      canSetRole && ["admin", "superadmin"].includes(normalizedRole)
+        ? normalizedRole
+        : "admin";
+
     const admin = await Admin.create({
       name,
-      email,
+      email: emailNorm,
       password: hash,
+      role: roleToSet,
     });
 
     res.status(201).json({
       success: true,
       message: "Admin Registered",
       token: generateToken(admin._id, admin.role),
+      admin: {
+        id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+      },
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -39,9 +61,14 @@ exports.registerAdmin = async (req, res) => {
 /* LOGIN */
 exports.loginAdmin = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
+    const emailNorm = email ? String(email).toLowerCase().trim() : "";
 
-    const admin = await Admin.findOne({ email });
+    if (!emailNorm || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    const admin = await Admin.findOne({ email: emailNorm });
 
     if (admin && (await bcrypt.compare(password, admin.password))) {
 
@@ -52,10 +79,18 @@ exports.loginAdmin = async (req, res) => {
         success: true,
         message: "Login Success",
         token: generateToken(admin._id, admin.role),
+        admin: {
+          id: admin._id,
+          name: admin.name,
+          email: admin.email,
+          role: admin.role,
+        },
       });
 
     } else {
-      res.status(401).json({ message: "Invalid credentials" });
+      res.status(401).json({
+        message: "Invalid email or password. Register an admin first via POST /api/admin/register if none exists.",
+      });
     }
 
   } catch (error) {
@@ -65,7 +100,6 @@ exports.loginAdmin = async (req, res) => {
 
 /* GET ALL ADMINS */
 exports.getAllAdmins = async (req, res) => {
-  console.log("Fetching all admins - requested by:",);
   try {
     const admins = await Admin.find().select("-password");
 
@@ -103,8 +137,10 @@ exports.updateAdmin = async (req, res) => {
       return res.status(404).json({ message: "Admin not found" });
     }
 
-    // 🔐 Only self or superadmin
-    if (req.admin.id !== admin.id && req.admin.role !== "superadmin") {
+    if (
+      String(req.admin._id) !== String(admin._id) &&
+      req.admin.role !== "superadmin"
+    ) {
       return res.status(403).json({ message: "Not authorized" });
     }
 
