@@ -47,7 +47,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 connectDb();
-/
+
 app.use("/api", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
