@@ -87,12 +87,8 @@ const productSchema = new mongoose.Schema(
     floweringType: { type: String, enum: FLOWERING_TYPES, default: "NA" },
     seasonalAvailability: { type: String, trim: true, default: "" },
 
-    mainImage: { type: String, trim: true, default: "" },
-    additionalImages: [{ type: String, trim: true }],
-    lifestyleImages: [{ type: String, trim: true }],
-    videoUrl: { type: String, trim: true, default: "" },
 
-    /** Flattened gallery for cart, lists, legacy APIs */
+    videoUrl: { type: String, trim: true, default: "" },
     image: { type: [String], default: [] },
 
     seoTitle: { type: String, trim: true, default: "" },

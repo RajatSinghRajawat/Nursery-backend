@@ -74,6 +74,7 @@ function parseSubcategoriesText(input) {
 
 const productadd = asyncHandler(async (req, res) => {
   const body = req.body || {};
+
   const {
     name,
     sku,
@@ -105,9 +106,6 @@ const productadd = asyncHandler(async (req, res) => {
     airPurifying,
     floweringType,
     seasonalAvailability,
-    mainImage,
-    additionalImages,
-    lifestyleImages,
     videoUrl,
     seoTitle,
     metaTitle,
@@ -116,132 +114,115 @@ const productadd = asyncHandler(async (req, res) => {
     slug,
     reviewsEnabled,
     isActive,
+    image // ✅ ONLY IMAGE FIELD
   } = body;
 
-  if (!name || typeof name !== "string") {
-    const err = new Error("name is required");
-    err.statusCode = 400;
-    throw err;
+  // ✅ REQUIRED VALIDATION
+  if (!name) {
+    throw new Error("name is required");
   }
-  const skuNorm = normalizeSku(sku);
-  if (!skuNorm) {
-    const err = new Error("sku is required (unique product code)");
-    err.statusCode = 400;
-    throw err;
+
+  if (!sku) {
+    throw new Error("sku is required");
   }
-  const dupSku = await Product.findOne({ sku: skuNorm });
-  if (dupSku) {
+
+  if (price === undefined) {
+    throw new Error("price is required");
+  }
+
+  if (stock === undefined) {
+    throw new Error("stock is required");
+  }
+
+  // ✅ SKU UNIQUE CHECK
+  const exist = await Product.findOne({ sku: sku.toUpperCase() });
+  if (exist) {
     const err = new Error("SKU already exists");
     err.statusCode = 409;
     throw err;
   }
-  if (price === undefined || Number.isNaN(Number(price))) {
-    const err = new Error("price (selling price) is required");
-    err.statusCode = 400;
-    throw err;
-  }
-  const soldByVal =
-    soldBy !== undefined && soldBy !== null && String(soldBy).trim()
-      ? String(soldBy).trim()
-      : "Nursery";
 
-  const { shortDescription, detailedDescription, description } = syncDescriptions(body);
-  if (
-    !detailedDescription &&
-    !description &&
-    !(shortDescription && shortDescription.length >= 10)
-  ) {
-    const err = new Error(
-      "Provide shortDescription (min ~10 chars) and/or detailedDescription"
-    );
-    err.statusCode = 400;
-    throw err;
-  }
-
-  const gallery = buildGalleryFromBody(body);
-  if (gallery.length === 0) {
-    const err = new Error(
-      "At least one image is required (mainImage, additionalImages, lifestyleImages, or image[])"
-    );
-    err.statusCode = 400;
-    throw err;
-  }
-  if (stock === undefined || Number.isNaN(Number(stock))) {
-    const err = new Error("stock is required");
-    err.statusCode = 400;
-    throw err;
-  }
+  // ✅ CATEGORY VALIDATION
   if (categoryId && !mongoose.Types.ObjectId.isValid(categoryId)) {
-    const err = new Error("categoryId is invalid");
-    err.statusCode = 400;
-    throw err;
+    throw new Error("Invalid categoryId");
   }
 
-  const doc = {
-    user: req.user && req.user.id ? req.user.id : undefined,
-    name: String(name).trim(),
-    sku: skuNorm,
-    slug: slug ? String(slug).toLowerCase().trim() : undefined,
-    categoryId: categoryId || undefined,
-    subcategoriesText:
-      subcategoriesText === undefined
-        ? undefined
-        : parseSubcategoriesText(subcategoriesText) || [],
-    shortDescription: shortDescription ?? "",
-    detailedDescription: detailedDescription ?? description ?? "",
-    description: description ?? detailedDescription ?? "",
-    highlights: Array.isArray(highlights) ? highlights.map((h) => String(h).trim()).filter(Boolean) : [],
-    plantType: plantType === undefined ? "" : String(plantType).trim(),
-    botanicalName: botanicalName === undefined ? "" : String(botanicalName).trim(),
-    commonName: commonName === undefined ? "" : String(commonName).trim(),
-    heightValue: heightValue === undefined ? undefined : Number(heightValue),
+  // ✅ IMAGE VALIDATION (IMPORTANT)
+  const images = Array.isArray(image)
+    ? image.map((img) => String(img).trim()).filter(Boolean)
+    : [];
+
+  if (images.length === 0) {
+    throw new Error("At least one image is required");
+  }
+
+  // ✅ CREATE OBJECT
+  const product = await Product.create({
+    user: req.user?.id,
+
+    name: name.trim(),
+    sku: sku.toUpperCase(),
+    slug: slug ? slug.toLowerCase() : undefined,
+
+    categoryId,
+    subcategoriesText: subcategoriesText || [],
+
+    shortDescription: body.shortDescription || "",
+    detailedDescription: body.detailedDescription || "",
+    description: body.description || "",
+
+    highlights: highlights || [],
+
+    plantType: plantType || "",
+    botanicalName: botanicalName || "",
+    commonName: commonName || "",
+
+    heightValue,
     heightUnit: heightUnit || "cm",
-    heightLabel: heightLabel === undefined ? "" : String(heightLabel).trim(),
-    plantAge: plantAge === undefined ? "" : String(plantAge).trim(),
-    mrp: mrp === undefined ? Number(price) : Number(mrp),
+    heightLabel: heightLabel || "",
+    plantAge: plantAge || "",
+
+    mrp: mrp || price,
     price: Number(price),
-    discount: discount === undefined ? 0 : Number(discount),
+    discount: discount || 0,
     discountType: discountType || "amount",
-    gstPercent: gstPercent === undefined ? 0 : Number(gstPercent),
+    gstPercent: gstPercent || 0,
+
     stock: Number(stock),
     stockStatus: stockStatus || "in_stock",
-    minOrderQty: minOrderQty === undefined ? 1 : Math.max(1, Number(minOrderQty)),
-    growthType: growthType === undefined ? "" : String(growthType).trim(),
-    sunlightRequirement:
-      sunlightRequirement === undefined ? "" : String(sunlightRequirement).trim(),
-    wateringSchedule:
-      wateringSchedule === undefined ? "" : String(wateringSchedule).trim(),
-    soilType: soilType === undefined ? "" : String(soilType).trim(),
-    maintenanceLevel:
-      maintenanceLevel === undefined ? "" : String(maintenanceLevel).trim(),
+    minOrderQty: minOrderQty || 1,
+
+    growthType: growthType || "",
+    sunlightRequirement: sunlightRequirement || "",
+    wateringSchedule: wateringSchedule || "",
+    soilType: soilType || "",
+    maintenanceLevel: maintenanceLevel || "",
     airPurifying: Boolean(airPurifying),
     floweringType: floweringType || "NA",
-    seasonalAvailability:
-      seasonalAvailability === undefined ? "" : String(seasonalAvailability).trim(),
-    mainImage: mainImage ? String(mainImage).trim() : gallery[0],
-    additionalImages: Array.isArray(additionalImages)
-      ? additionalImages.map((u) => String(u).trim()).filter(Boolean)
-      : [],
-    lifestyleImages: Array.isArray(lifestyleImages)
-      ? lifestyleImages.map((u) => String(u).trim()).filter(Boolean)
-      : [],
-    videoUrl: videoUrl === undefined ? "" : String(videoUrl).trim(),
-    image: gallery,
-    seoTitle: seoTitle === undefined ? "" : String(seoTitle).trim(),
-    metaTitle: metaTitle === undefined ? "" : String(metaTitle).trim(),
-    metaDescription: metaDescription === undefined ? "" : String(metaDescription).trim(),
-    metaKeywords: Array.isArray(metaKeywords)
-      ? metaKeywords.map((k) => String(k).trim()).filter(Boolean)
-      : [],
-    reviewsEnabled: reviewsEnabled === undefined ? true : Boolean(reviewsEnabled),
-    soldBy: soldByVal,
-    responseRate: responseRate === undefined ? undefined : Number(responseRate),
-    isActive: isActive === undefined ? true : Boolean(isActive),
-  };
+    seasonalAvailability: seasonalAvailability || "",
 
-  const created = await Product.create(doc);
-  res.status(201).json(created);
+    videoUrl: videoUrl || "",
+    image: images, // ✅ ONLY THIS
+
+    seoTitle: seoTitle || "",
+    metaTitle: metaTitle || "",
+    metaDescription: metaDescription || "",
+    metaKeywords: metaKeywords || [],
+
+    reviewsEnabled: reviewsEnabled ?? true,
+
+    soldBy: soldBy || "Nursery",
+    responseRate,
+    isActive: isActive ?? true
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "Product created successfully",
+    data: product
+  });
 });
+
 
 const listProducts = asyncHandler(async (req, res) => {
   const {
