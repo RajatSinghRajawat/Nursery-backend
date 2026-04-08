@@ -33,7 +33,7 @@ const getCart = asyncHandler(async (req, res) => {
   await cart.populate({
     path: "Products.productId",
     select:
-      "name sku price discount discountType mrp image mainImage shortDescription stock stockStatus isActive description soldBy categoryId",
+      "name sku price discount discountType mrp images image shortDescription stock stockStatus isActive description soldBy categoryId",
     populate: { path: "categoryId", select: "name slug" },
   });
   res.json(cart);
@@ -82,7 +82,7 @@ const addOrUpdateItem = asyncHandler(async (req, res) => {
   await cart.populate({
     path: "Products.productId",
     select:
-      "name sku price discount discountType mrp image mainImage shortDescription stock stockStatus isActive description soldBy categoryId",
+      "name sku price discount discountType mrp images image shortDescription stock stockStatus isActive description soldBy categoryId",
     populate: { path: "categoryId", select: "name slug" },
   });
   res.json(cart);
@@ -132,7 +132,7 @@ const setItemQuantity = asyncHandler(async (req, res) => {
   await cart.populate({
     path: "Products.productId",
     select:
-      "name sku price discount discountType mrp image mainImage shortDescription stock stockStatus isActive description soldBy categoryId",
+      "name sku price discount discountType mrp images image shortDescription stock stockStatus isActive description soldBy categoryId",
     populate: { path: "categoryId", select: "name slug" },
   });
   res.json(cart);
@@ -155,7 +155,7 @@ const removeItem = asyncHandler(async (req, res) => {
   await cart.populate({
     path: "Products.productId",
     select:
-      "name sku price discount discountType mrp image mainImage shortDescription stock stockStatus isActive description soldBy categoryId",
+      "name sku price discount discountType mrp images image shortDescription stock stockStatus isActive description soldBy categoryId",
     populate: { path: "categoryId", select: "name slug" },
   });
   res.json(cart);

@@ -15,22 +15,22 @@ function normalizeSku(v) {
   return String(v).trim().toUpperCase();
 }
 
-function buildGalleryFromBody(body) {
-  const {
-    mainImage,
-    additionalImages,
-    lifestyleImages,
-    image,
-  } = body || {};
+function normalizeImages(input) {
+  const arr = Array.isArray(input)
+    ? input
+    : typeof input === "string"
+      ? input.split(/\r?\n|,/g)
+      : [];
   const out = [];
-  const push = (u) => {
-    const s = typeof u === "string" ? u.trim() : "";
-    if (s && !out.includes(s)) out.push(s);
-  };
-  if (mainImage) push(mainImage);
-  if (Array.isArray(additionalImages)) additionalImages.forEach((u) => push(u));
-  if (Array.isArray(lifestyleImages)) lifestyleImages.forEach((u) => push(u));
-  if (Array.isArray(image)) image.forEach((u) => push(u));
+  const seen = new Set();
+  for (const u of arr) {
+    const s = typeof u === "string" ? u.trim() : String(u || "").trim();
+    if (!s) continue;
+    const key = s;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(s);
+  }
   return out;
 }
 
@@ -114,7 +114,8 @@ const productadd = asyncHandler(async (req, res) => {
     slug,
     reviewsEnabled,
     isActive,
-    image // ✅ ONLY IMAGE FIELD
+    images,
+    image, // backward-compat
   } = body;
 
   // ✅ REQUIRED VALIDATION
@@ -147,12 +148,9 @@ const productadd = asyncHandler(async (req, res) => {
     throw new Error("Invalid categoryId");
   }
 
-  // ✅ IMAGE VALIDATION (IMPORTANT)
-  const images = Array.isArray(image)
-    ? image.map((img) => String(img).trim()).filter(Boolean)
-    : [];
+  const normalizedImages = normalizeImages(images ?? image);
 
-  if (images.length === 0) {
+  if (normalizedImages.length === 0) {
     throw new Error("At least one image is required");
   }
 
@@ -202,7 +200,7 @@ const productadd = asyncHandler(async (req, res) => {
     seasonalAvailability: seasonalAvailability || "",
 
     videoUrl: videoUrl || "",
-    image: images, // ✅ ONLY THIS
+    images: normalizedImages,
 
     seoTitle: seoTitle || "",
     metaTitle: metaTitle || "",
@@ -379,9 +377,6 @@ const updateProduct = asyncHandler(async (req, res) => {
     airPurifying,
     floweringType,
     seasonalAvailability,
-    mainImage,
-    additionalImages,
-    lifestyleImages,
     videoUrl,
     seoTitle,
     metaTitle,
@@ -390,6 +385,8 @@ const updateProduct = asyncHandler(async (req, res) => {
     slug,
     reviewsEnabled,
     isActive,
+    images,
+    image, // backward-compat
   } = body;
 
   if (categoryId !== undefined && categoryId !== null && categoryId !== "") {
@@ -422,27 +419,9 @@ const updateProduct = asyncHandler(async (req, res) => {
     throw err;
   }
 
-  let gallery;
-  if (
-    mainImage !== undefined ||
-    additionalImages !== undefined ||
-    lifestyleImages !== undefined ||
-    body.image !== undefined
-  ) {
-    const merged = {
-      mainImage:
-        mainImage !== undefined ? mainImage : product.mainImage,
-      additionalImages:
-        additionalImages !== undefined
-          ? additionalImages
-          : product.additionalImages,
-      lifestyleImages:
-        lifestyleImages !== undefined
-          ? lifestyleImages
-          : product.lifestyleImages,
-      image: body.image !== undefined ? body.image : product.image,
-    };
-    gallery = buildGalleryFromBody(merged);
+  let nextImages;
+  if (images !== undefined || image !== undefined) {
+    nextImages = normalizeImages(images ?? image);
   }
 
   const update = pickDefined({
@@ -495,11 +474,8 @@ const updateProduct = asyncHandler(async (req, res) => {
       seasonalAvailability === undefined
         ? undefined
         : String(seasonalAvailability).trim(),
-    mainImage: mainImage === undefined ? undefined : String(mainImage).trim(),
-    additionalImages,
-    lifestyleImages,
     videoUrl: videoUrl === undefined ? undefined : String(videoUrl).trim(),
-    image: gallery,
+    images: nextImages,
     seoTitle: seoTitle === undefined ? undefined : String(seoTitle).trim(),
     metaTitle: metaTitle === undefined ? undefined : String(metaTitle).trim(),
     metaDescription:

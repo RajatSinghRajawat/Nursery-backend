@@ -87,9 +87,13 @@ const productSchema = new mongoose.Schema(
     floweringType: { type: String, enum: FLOWERING_TYPES, default: "NA" },
     seasonalAvailability: { type: String, trim: true, default: "" },
 
-
     videoUrl: { type: String, trim: true, default: "" },
-    image: { type: [String], default: [] },
+
+    /**
+     * Single media field: multiple image URLs.
+     * Admin can add one or more image URLs; first one can be treated as "primary" by clients.
+     */
+    images: { type: [String], default: [] },
 
     seoTitle: { type: String, trim: true, default: "" },
     metaTitle: { type: String, trim: true, default: "" },
@@ -108,19 +112,16 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-function mergeImages(doc) {
-  const out = [];
-  const push = (u) => {
-    const s = typeof u === "string" ? u.trim() : "";
-    if (s && !out.includes(s)) out.push(s);
-  };
-  if (doc.mainImage) push(doc.mainImage);
-  (doc.additionalImages || []).forEach(push);
-  (doc.lifestyleImages || []).forEach(push);
-  (doc.image || []).forEach(push);
-  doc.image = out;
-  if (!doc.mainImage && out[0]) doc.mainImage = out[0];
-}
+// Backward compatibility for older clients that still send/read `image`
+// (array of image URLs). We store everything in `images`.
+productSchema
+  .virtual("image")
+  .get(function () {
+    return this.images;
+  })
+  .set(function (v) {
+    this.images = v;
+  });
 
 function recomputeRatings(doc) {
   const list = doc.reviews || [];
@@ -144,7 +145,6 @@ productSchema.pre("save", function () {
   if (!this.shortDescription && this.detailedDescription) {
     this.shortDescription = String(this.detailedDescription).slice(0, 220);
   }
-  mergeImages(this);
   if (this.stock <= 0 && this.stockStatus === "in_stock") {
     this.stockStatus = "out_of_stock";
   }
