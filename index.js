@@ -17,7 +17,7 @@ const testimonialRoutes = require("./src/routes/testimonialRoutes");
 const errorHandler = require("./src/middleware/errorMiddleware");
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5008;
 
 const corsOrigins = (process.env.CORS_ORIGIN ||
   "http://localhost:5000,http://localhost:5001,http://localhost:5002,http://localhost:5003,http://localhost:5173,http://localhost:5174,http://127.0.0.1:5000,http://127.0.0.1:5001,http://127.0.0.1:5002,http://127.0.0.1:5003,http://127.0.0.1:5173,http://127.0.0.1:5174")
