@@ -27,8 +27,7 @@ app.use(
 app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
+app.use(express.static("public/Uploads"))
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "nursery-backend" });
 });

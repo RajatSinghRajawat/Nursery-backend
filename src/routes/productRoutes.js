@@ -12,6 +12,7 @@ const {
   addOrUpdateMyReview,
   updateReview,
 } = require("../controllers/productController");
+const upload = require('../../multer');
 
 
 
@@ -24,7 +25,7 @@ router.post("/:id/reviews", authMiddleware, addOrUpdateMyReview);
 router.put("/:id/reviews/:reviewId", authMiddleware, updateReview);
 
 // admin write
-router.post('/add' , authMiddleware,  requireRole(["admin", "superadmin"]), productadd);
+router.post('/add' , authMiddleware, upload.array("images") ,  requireRole(["admin", "superadmin"]), productadd);
 router.put("/:id", authMiddleware, requireRole(["admin", "superadmin"]), updateProduct);
 router.delete(
   "/:id",
