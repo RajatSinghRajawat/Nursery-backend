@@ -71,7 +71,7 @@ const productSchema = new mongoose.Schema(
     mrp: { type: Number, min: 0, default: 0 },
     price: { type: Number, required: true, min: 0 },
     discount: { type: Number, default: 0 },
-    discountType: { type: String, enum: DISCOUNT_TYPES, default: "amount" },
+    discountType: { type: String, enum: ["percent", "amount"],  default: "amount" },
     gstPercent: { type: Number, min: 0, max: 100, default: 0 },
 
     stock: { type: Number, required: true, min: 0, default: 0 },

@@ -15,24 +15,7 @@ function normalizeSku(v) {
   return String(v).trim().toUpperCase();
 }
 
-function normalizeImages(input) {
-  const arr = Array.isArray(input)
-    ? input
-    : typeof input === "string"
-      ? input.split(/\r?\n|,/g)
-      : [];
-  const out = [];
-  const seen = new Set();
-  for (const u of arr) {
-    const s = typeof u === "string" ? u.trim() : String(u || "").trim();
-    if (!s) continue;
-    const key = s;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(s);
-  }
-  return out;
-}
+
 
 function syncDescriptions(body) {
   const shortDescription =
@@ -72,155 +55,284 @@ function parseSubcategoriesText(input) {
   return out;
 }
 
-const productadd = asyncHandler(async (req, res) => {
-  const body = req.body || {};
+// const productadd = asyncHandler(async (req, res) => {
+//   const body = req.body || {};
 
-  const {
-    name,
-    sku,
-    price,
-    discount,
-    discountType,
-    soldBy,
-    responseRate,
-    categoryId,
-    subcategoriesText,
-    highlights,
-    plantType,
-    botanicalName,
-    commonName,
-    heightValue,
-    heightUnit,
-    heightLabel,
-    plantAge,
-    mrp,
-    gstPercent,
-    stock,
-    stockStatus,
-    minOrderQty,
-    growthType,
-    sunlightRequirement,
-    wateringSchedule,
-    soilType,
-    maintenanceLevel,
-    airPurifying,
-    floweringType,
-    seasonalAvailability,
-    videoUrl,
-    seoTitle,
-    metaTitle,
-    metaDescription,
-    metaKeywords,
-    slug,
-    reviewsEnabled,
-    isActive,
-    images,
-    image, // backward-compat
-  } = body;
+//   const {
+//     name,
+//     sku,
+//     price,
+//     discount,
+//     discountType,
+//     soldBy,
+//     responseRate,
+//     categoryId,
+//     subcategoriesText,
+//     highlights,
+//     plantType,
+//     botanicalName,
+//     commonName,
+//     heightValue,
+//     heightUnit,
+//     heightLabel,
+//     plantAge,
+//     mrp,
+//     gstPercent,
+//     stock,
+//     stockStatus,
+//     minOrderQty,
+//     growthType,
+//     sunlightRequirement,
+//     wateringSchedule,
+//     soilType,
+//     maintenanceLevel,
+//     airPurifying,
+//     floweringType,
+//     seasonalAvailability,
+//     videoUrl,
+//     seoTitle,
+//     metaTitle,
+//     metaDescription,
+//     metaKeywords,
+//     slug,
+//     reviewsEnabled,
+//     isActive,
+//     images,
+//     image, // backward-compat
+//   } = body;
 
-  // ✅ REQUIRED VALIDATION
-  if (!name) {
-    throw new Error("name is required");
+//   // ✅ REQUIRED VALIDATION
+//   if (!name) {
+//     throw new Error("name is required");
+//   }
+
+//   if (!sku) {
+//     throw new Error("sku is required");
+//   }
+
+//   if (price === undefined) {
+//     throw new Error("price is required");
+//   }
+
+//   if (stock === undefined) {
+//     throw new Error("stock is required");
+//   }
+
+//   // ✅ SKU UNIQUE CHECK
+//   const exist = await Product.findOne({ sku: sku.toUpperCase() });
+//   if (exist) {
+//     const err = new Error("SKU already exists");
+//     err.statusCode = 409;
+//     throw err;
+//   }
+
+//   // ✅ CATEGORY VALIDATION
+//   if (categoryId && !mongoose.Types.ObjectId.isValid(categoryId)) {
+//     throw new Error("Invalid categoryId");
+//   }
+
+
+//   // ✅ CREATE OBJECT
+//   const product = await Product.create({
+//     user: req.user?.id,
+
+//     name: name.trim(),
+//     sku: sku.toUpperCase(),
+//     slug: slug ? slug.toLowerCase() : undefined,
+
+//     categoryId,
+//     subcategoriesText: subcategoriesText || [],
+
+//     shortDescription: body.shortDescription || "",
+//     detailedDescription: body.detailedDescription || "",
+//     description: body.description || "",
+
+//     highlights: highlights || [],
+
+//     plantType: plantType || "",
+//     botanicalName: botanicalName || "",
+//     commonName: commonName || "",
+
+//     heightValue,
+//     heightUnit: heightUnit || "cm",
+//     heightLabel: heightLabel || "",
+//     plantAge: plantAge || "",
+
+//     mrp: mrp || price,
+//     price: Number(price),
+//     discount: discount || 0,
+//     discountType: discountType || "amount",
+//     gstPercent: gstPercent || 0,
+
+//     stock: Number(stock),
+//     stockStatus: stockStatus || "in_stock",
+//     minOrderQty: minOrderQty || 1,
+
+//     growthType: growthType || "",
+//     sunlightRequirement: sunlightRequirement || "",
+//     wateringSchedule: wateringSchedule || "",
+//     soilType: soilType || "",
+//     maintenanceLevel: maintenanceLevel || "",
+//     airPurifying: Boolean(airPurifying),
+//     floweringType: floweringType || "NA",
+//     seasonalAvailability: seasonalAvailability || "",
+
+//     videoUrl: videoUrl || "",
+//     images,
+
+//     seoTitle: seoTitle || "",
+//     metaTitle: metaTitle || "",
+//     metaDescription: metaDescription || "",
+//     metaKeywords: metaKeywords || [],
+
+//     reviewsEnabled: reviewsEnabled ?? true,
+
+//     soldBy: soldBy || "Nursery",
+//     responseRate,
+//     isActive: isActive ?? true
+//   });
+
+//   res.status(201).json({
+//     success: true,
+//     message: "Product created successfully",
+//     data: product
+//   });
+// });
+
+const productadd = async (req, res) => {
+  try {
+    const {
+      name,
+      sku,
+      slug,
+      categoryId,
+      subcategoriesText,
+
+      shortDescription,
+      detailedDescription,
+      description,
+      highlights,
+
+      plantType,
+      botanicalName,
+      commonName,
+
+      heightValue,
+      heightUnit,
+      heightLabel,
+      plantAge,
+
+      mrp,
+      price,
+      discount,
+      discountType,
+      gstPercent,
+
+      stock,
+      stockStatus,
+      minOrderQty,
+
+      growthType,
+      sunlightRequirement,
+      wateringSchedule,
+      soilType,
+      maintenanceLevel,
+      airPurifying,
+      floweringType,
+      seasonalAvailability,
+
+      videoUrl,
+
+      seoTitle,
+      metaTitle,
+      metaDescription,
+      metaKeywords,
+
+      soldBy,
+      responseRate,
+      isActive
+    } = req.body;
+
+    // ✅ required validation
+    if (!name || !price || !stock) {
+      return res.status(400).json({ message: "name, price, stock required" });
+    }
+
+    const image = req.files?.map(file => file.filename)
+      || (req.file ? [req.file.filename] : []);
+    // ✅ SKU check
+    if (sku) {
+      const exist = await Product.findOne({ sku });
+      if (exist) {
+        return res.status(400).json({ message: "SKU already exists" });
+      }
+    }
+
+    const product = await Product.create({
+      user: req.user?.id,
+
+      name,
+      sku,
+      slug,
+
+      categoryId,
+      subcategoriesText,
+
+      shortDescription,
+      detailedDescription,
+      description,
+      highlights,
+
+      plantType,
+      botanicalName,
+      commonName,
+
+      heightValue,
+      heightUnit,
+      heightLabel,
+      plantAge,
+
+      mrp,
+      price,
+      discount,
+      discountType,
+      gstPercent,
+
+      stock,
+      stockStatus,
+      minOrderQty,
+
+      growthType,
+      sunlightRequirement,
+      wateringSchedule,
+      soilType,
+      maintenanceLevel,
+      airPurifying,
+      floweringType,
+      seasonalAvailability,
+
+      videoUrl,
+      images: image || [],
+
+      seoTitle,
+      metaTitle,
+      metaDescription,
+      metaKeywords,
+
+      soldBy,
+      responseRate,
+      isActive
+    });
+
+    res.status(201).json({
+      success: true,
+      data: product
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
-
-  if (!sku) {
-    throw new Error("sku is required");
-  }
-
-  if (price === undefined) {
-    throw new Error("price is required");
-  }
-
-  if (stock === undefined) {
-    throw new Error("stock is required");
-  }
-
-  // ✅ SKU UNIQUE CHECK
-  const exist = await Product.findOne({ sku: sku.toUpperCase() });
-  if (exist) {
-    const err = new Error("SKU already exists");
-    err.statusCode = 409;
-    throw err;
-  }
-
-  // ✅ CATEGORY VALIDATION
-  if (categoryId && !mongoose.Types.ObjectId.isValid(categoryId)) {
-    throw new Error("Invalid categoryId");
-  }
-
-  const normalizedImages = normalizeImages(images ?? image);
-
-  if (normalizedImages.length === 0) {
-    throw new Error("At least one image is required");
-  }
-
-  // ✅ CREATE OBJECT
-  const product = await Product.create({
-    user: req.user?.id,
-
-    name: name.trim(),
-    sku: sku.toUpperCase(),
-    slug: slug ? slug.toLowerCase() : undefined,
-
-    categoryId,
-    subcategoriesText: subcategoriesText || [],
-
-    shortDescription: body.shortDescription || "",
-    detailedDescription: body.detailedDescription || "",
-    description: body.description || "",
-
-    highlights: highlights || [],
-
-    plantType: plantType || "",
-    botanicalName: botanicalName || "",
-    commonName: commonName || "",
-
-    heightValue,
-    heightUnit: heightUnit || "cm",
-    heightLabel: heightLabel || "",
-    plantAge: plantAge || "",
-
-    mrp: mrp || price,
-    price: Number(price),
-    discount: discount || 0,
-    discountType: discountType || "amount",
-    gstPercent: gstPercent || 0,
-
-    stock: Number(stock),
-    stockStatus: stockStatus || "in_stock",
-    minOrderQty: minOrderQty || 1,
-
-    growthType: growthType || "",
-    sunlightRequirement: sunlightRequirement || "",
-    wateringSchedule: wateringSchedule || "",
-    soilType: soilType || "",
-    maintenanceLevel: maintenanceLevel || "",
-    airPurifying: Boolean(airPurifying),
-    floweringType: floweringType || "NA",
-    seasonalAvailability: seasonalAvailability || "",
-
-    videoUrl: videoUrl || "",
-    images: normalizedImages,
-
-    seoTitle: seoTitle || "",
-    metaTitle: metaTitle || "",
-    metaDescription: metaDescription || "",
-    metaKeywords: metaKeywords || [],
-
-    reviewsEnabled: reviewsEnabled ?? true,
-
-    soldBy: soldBy || "Nursery",
-    responseRate,
-    isActive: isActive ?? true
-  });
-
-  res.status(201).json({
-    success: true,
-    message: "Product created successfully",
-    data: product
-  });
-});
-
+}
 
 const listProducts = asyncHandler(async (req, res) => {
   const {
