@@ -23,7 +23,7 @@ app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
 
-app.use(express.static("public/Uploads"))
+app.use("/uploads", express.static(path.join(__dirname, "public/Uploads")));
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "nursery-backend" });
 });
