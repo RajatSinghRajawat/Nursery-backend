@@ -6,10 +6,10 @@ const { requireRole } = require("../middleware/requireRole");
 
 const { createSale, listSales, getSale, salesSummary } = require("../controllers/salesController");
 
-// admin read/write
-router.get("/", authMiddleware, requireRole(["admin", "superadmin"]), listSales);
-router.get("/summary", authMiddleware, requireRole(["admin", "superadmin"]), salesSummary);
-router.get("/:id", authMiddleware, requireRole(["admin", "superadmin"]), getSale);
-router.post("/", authMiddleware, requireRole(["admin", "superadmin"]), createSale);
+// Superadmin only (POS / sales reporting)
+router.get("/", authMiddleware, requireRole(["superadmin"]), listSales);
+router.get("/summary", authMiddleware, requireRole(["superadmin"]), salesSummary);
+router.get("/:id", authMiddleware, requireRole(["superadmin"]), getSale);
+router.post("/", authMiddleware, requireRole(["superadmin"]), createSale);
 
 module.exports = router;

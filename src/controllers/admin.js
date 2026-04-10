@@ -13,6 +13,7 @@ const generateToken = (id, role) => {
 exports.registerAdmin = async (req, res) => {
   try {
     const { name, email, password, role } = req.body || {};
+    console.log(req.body);
     const emailNorm = email ? String(email).toLowerCase().trim() : "";
 
     if (!name || !emailNorm || !password) {
@@ -63,6 +64,8 @@ exports.loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body || {};
     const emailNorm = email ? String(email).toLowerCase().trim() : "";
+
+
 
     if (!emailNorm || !password) {
       return res.status(400).json({ message: "Email and password are required" });
