@@ -11,7 +11,7 @@ const productRoutes = require("./src/routes/productRoutes");
 const categoryRoutes = require("./src/routes/categoryRoutes");
 const cartRoutes = require("./src/routes/cartRoutes");
 const orderRoutes = require("./src/routes/orderRoutes");
-const uploadRoutes = require("./src/routes/uploadRoutes");
+
 const salesRoutes = require("./src/routes/salesRoutes");
 const testimonialRoutes = require("./src/routes/testimonialRoutes");
 const errorHandler = require("./src/middleware/errorMiddleware");
@@ -43,7 +43,6 @@ app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
-app.use("/api/upload", uploadRoutes);
 app.use("/api/sales", salesRoutes);
 app.use("/api/testimonials", testimonialRoutes);
 

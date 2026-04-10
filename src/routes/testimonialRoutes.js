@@ -10,9 +10,10 @@ const {
   setApproval,
   deleteTestimonial,
 } = require("../controllers/testimonialController");
+const upload = require("../../multer");
 
 router.get("/", listPublicTestimonials);
-router.post("/", authMiddleware, createTestimonial);
+router.post("/", authMiddleware,  upload.array("images")  ,createTestimonial);
 router.get("/admin", authMiddleware, requireRole(["admin", "superadmin"]), listAdminTestimonials);
 router.patch("/admin/:id/approval", authMiddleware, requireRole(["admin", "superadmin"]), setApproval);
 router.delete("/admin/:id", authMiddleware, requireRole(["admin", "superadmin"]), deleteTestimonial);
