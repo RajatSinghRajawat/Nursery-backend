@@ -10,6 +10,7 @@ const generateToken = (id, role) => {
     { expiresIn: "7d" }
   );
 };
+// jjjjj
 exports.registerAdmin = async (req, res) => {
   try {
     const { name, email, password, role } = req.body || {};
