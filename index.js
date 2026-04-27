@@ -22,11 +22,13 @@ const port = process.env.PORT || 5008;
 
 app.use(cors({
   origin: [
-    "http://localhost:5173",   // 👈 ye add karo
+    "http://localhost:5173",
     "https://greenbeli.in"
   ],
   credentials: true
 }));
+
+app.options("*", cors()); // 👈 VERY IMPORTANT
 app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
 
