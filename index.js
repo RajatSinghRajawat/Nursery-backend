@@ -20,7 +20,13 @@ const errorHandler = require("./src/middleware/errorMiddleware");
 const app = express();
 const port = process.env.PORT || 5008;
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",   // 👈 ye add karo
+    "https://greenbeli.in"
+  ],
+  credentials: true
+}));
 app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
 
