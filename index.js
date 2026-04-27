@@ -11,6 +11,7 @@ const productRoutes = require("./src/routes/productRoutes");
 const categoryRoutes = require("./src/routes/categoryRoutes");
 const cartRoutes = require("./src/routes/cartRoutes");
 const orderRoutes = require("./src/routes/orderRoutes");
+const proposalsRoutes = require("./src/routes/proposals");
 
 const salesRoutes = require("./src/routes/salesRoutes");
 const testimonialRoutes = require("./src/routes/testimonialRoutes");
@@ -45,6 +46,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/sales", salesRoutes);
 app.use("/api/testimonials", testimonialRoutes);
+app.use("/api/proposals", proposalsRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ message: "Not found" });
@@ -61,7 +63,10 @@ app.use(errorHandler);
 //   process.exit(1);
 // });
 
-
+app.use((req, res) => {
+    console.log("Route hit:", req.originalUrl);
+    res.status(404).json({ message: "Not found" });
+});
  app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
   });

@@ -120,7 +120,14 @@ const me = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
+const getAllusers = async (req, res) => {
+  try {
+    const users = await User.find(); // 👈 await lagana zaruri hai
+    res.status(200).json(users);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 const logout = (req, res) => {
   res
     .clearCookie("token", {
@@ -135,6 +142,8 @@ module.exports = {
   register,
   login,
   me,
+  getAllusers,
   logout,
+
 };
 
