@@ -26,7 +26,7 @@ app.use(cors({
 }));
 
 app.options("*", cors()); // 👈 VERY IMPORTANT
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json());
 app.use(cookieParser());
 
 app.use("/uploads", express.static(path.join(__dirname, "public/Uploads")));
