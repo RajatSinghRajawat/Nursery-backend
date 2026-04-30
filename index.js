@@ -21,7 +21,8 @@ const app = express();
 const port = process.env.PORT || 5008;
 
 app.use(cors({
-  origin: "http://localhost:5173",
+   origin: ['https://greenbeli.in', 'http://localhost:5173'],
+
   credentials: true
 }));
 
