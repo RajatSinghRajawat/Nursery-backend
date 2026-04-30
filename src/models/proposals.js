@@ -24,7 +24,7 @@ const proposalSchema = new mongoose.Schema(
             }
         ],
 
-        hsnCode: { type: String, required: true },
+        hsnCode: { type: String, required: false },
         gst: { type: Boolean, required: true },
         termsAndConditions: { type: String, required: true },
         note: { type: String, required: true },
