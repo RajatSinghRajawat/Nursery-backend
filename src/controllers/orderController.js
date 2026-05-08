@@ -7,7 +7,7 @@ const { effectiveSellingUnit } = require("../utils/productPricing");
 
 const createOrder = asyncHandler(async (req, res) => {
   const userId = req.user.id;
-  const { shippingInfo } = req.body || {};
+  const { shippingInfo, paymentInfo } = req.body || {};
   if (!shippingInfo || typeof shippingInfo !== "object") {
     const err = new Error("shippingInfo is required");
     err.statusCode = 400;
@@ -21,6 +21,15 @@ const createOrder = asyncHandler(async (req, res) => {
     err.statusCode = 400;
     throw err;
   }
+
+  const normalizedPayment = {
+    id: String(paymentInfo?.id || ""),
+    status: String(paymentInfo?.status || "pending"),
+    method: String(paymentInfo?.method || "UPI"),
+    upiId: String(paymentInfo?.upiId || ""),
+    phoneNo: String(paymentInfo?.phoneNo || ""),
+    scannerRef: String(paymentInfo?.scannerRef || ""),
+  };
 
   const cart = await Cart.findOne({ userId });
   if (!cart || !cart.Products || cart.Products.length === 0) {
@@ -80,7 +89,7 @@ const createOrder = asyncHandler(async (req, res) => {
     shippingPrice,
     totalPrice,
     orderStatus: "Processing",
-    paymentInfo: { id: "", status: "pending" },
+    paymentInfo: normalizedPayment,
   });
 
   for (const line of cart.Products) {

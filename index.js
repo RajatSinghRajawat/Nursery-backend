@@ -12,6 +12,7 @@ const categoryRoutes = require("./src/routes/categoryRoutes");
 const cartRoutes = require("./src/routes/cartRoutes");
 const orderRoutes = require("./src/routes/orderRoutes");
 const proposalsRoutes = require("./src/routes/proposals");
+const leadsRoutes = require("./src/routes/leadsRoutes");
 
 const salesRoutes = require("./src/routes/salesRoutes");
 const testimonialRoutes = require("./src/routes/testimonialRoutes");
@@ -26,7 +27,7 @@ app.use(cors({
   credentials: true
 }));
 
-app.options("*", cors()); // 👈 VERY IMPORTANT
+app.options("*", cors()); 
 app.use(express.json());
 app.use(cookieParser());
 
@@ -53,6 +54,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/sales", salesRoutes);
 app.use("/api/testimonials", testimonialRoutes);
 app.use("/api/proposals", proposalsRoutes);
+app.use("/api/leads", leadsRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ message: "Not found" });

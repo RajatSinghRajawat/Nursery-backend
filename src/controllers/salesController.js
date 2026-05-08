@@ -178,6 +178,58 @@ const salesSummary = asyncHandler(async (req, res) => {
   });
 });
 
+// GET /sales/product-summary?from=&to=&productId=&adminId=
+const salesProductSummary = asyncHandler(async (req, res) => {
+  const filter = buildSalesFilter(req.query, req.user);
+  const grouped = await Sale.aggregate([
+    { $match: filter },
+    {
+      $group: {
+        _id: "$productId",
+        soldQuantity: { $sum: { $ifNull: ["$quantity", 0] } },
+        totalAmount: { $sum: { $ifNull: ["$totalAmount", 0] } },
+        saleCount: { $sum: 1 },
+        lastSoldAt: { $max: "$createdAt" },
+      },
+    },
+    { $sort: { soldQuantity: -1 } },
+  ]);
+
+  const productIds = grouped.map((row) => row._id).filter(Boolean);
+  const products = await Product.find({ _id: { $in: productIds } })
+    .select("name sku stock createdAt");
+  const productById = new Map(products.map((p) => [String(p._id), p]));
+
+  const items = grouped.map((row) => {
+    const product = productById.get(String(row._id));
+    return {
+      productId: row._id,
+      name: product?.name || "Unknown Product",
+      sku: product?.sku || "—",
+      currentStock: Number(product?.stock ?? 0),
+      soldQuantity: Number(row.soldQuantity || 0),
+      totalAmount: Number(row.totalAmount || 0),
+      saleCount: Number(row.saleCount || 0),
+      lastSoldAt: row.lastSoldAt || null,
+      productCreatedAt: product?.createdAt || null,
+    };
+  });
+
+  const totals = items.reduce(
+    (acc, row) => {
+      acc.products += 1;
+      acc.saleCount += row.saleCount;
+      acc.soldQuantity += row.soldQuantity;
+      acc.totalAmount += row.totalAmount;
+      acc.remainingStock += row.currentStock;
+      return acc;
+    },
+    { products: 0, saleCount: 0, soldQuantity: 0, totalAmount: 0, remainingStock: 0 }
+  );
+
+  res.json({ totals, items });
+});
+
 // GET /sales/:id
 const getSale = asyncHandler(async (req, res) => {
   const { id } = req.params || {};
@@ -200,4 +252,4 @@ const getSale = asyncHandler(async (req, res) => {
   res.json(sale);
 });
 
-module.exports = { createSale, listSales, getSale, salesSummary };
+module.exports = { createSale, listSales, getSale, salesSummary, salesProductSummary };

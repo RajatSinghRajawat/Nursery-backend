@@ -13,6 +13,13 @@ const {
 } = require("../controllers/admin");
 const { listAllOrders, updateOrderStatus } = require("../controllers/orderController");
 const { dashboardStats } = require("../controllers/statsController");
+const {
+  listUsersForAdmin,
+  getUserOrdersForAdmin,
+  listLeadsForAdmin,
+  updateLeadStatus,
+  deleteLead,
+} = require("../controllers/customerLeadController");
 const { isSuperAdmin, protect } = require("../middleware/authMiddleware");
 
 
@@ -34,5 +41,10 @@ router.put("/reset-password/:token", resetPassword);
 router.get("/stats", protect, dashboardStats);
 router.get("/orders", protect, listAllOrders);
 router.patch("/orders/:id/status", protect, updateOrderStatus);
+router.get("/users", protect, listUsersForAdmin);
+router.get("/users/:id/orders", protect, getUserOrdersForAdmin);
+router.get("/leads", protect, listLeadsForAdmin);
+router.put("/leads/:id", protect, updateLeadStatus);
+router.delete("/leads/:id", protect, isSuperAdmin, deleteLead);
 
 module.exports = router;

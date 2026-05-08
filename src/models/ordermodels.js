@@ -29,6 +29,10 @@ const orderSchema = new mongoose.Schema({
     paymentInfo: {
         id: { type: String, default: "" },
         status: { type: String, default: "" },
+        method: { type: String, default: "UPI" },
+        upiId: { type: String, default: "" },
+        phoneNo: { type: String, default: "" },
+        scannerRef: { type: String, default: "" },
     },
     paidAt: { type: Date },
     itemPrice: { type: Number, default: 0 },
