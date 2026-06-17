@@ -29,13 +29,14 @@ exports.registerAdmin = async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
 
     // Only superadmin (when using protected route) can set admin role.
-    // Public /register bootstrap defaults to "admin".
-    const canSetRole = req.admin && req.admin.role === "superadmin";
+    // Public /register bootstrap defaults to "admin" unless no admins exist in system.
+    const totalAdmins = await Admin.countDocuments();
+    const canSetRole = (req.admin && req.admin.role === "superadmin") || totalAdmins === 0;
     const normalizedRole = role ? String(role).trim().toLowerCase() : "admin";
     const roleToSet =
       canSetRole && ["admin", "superadmin"].includes(normalizedRole)
         ? normalizedRole
-        : "admin";
+        : (totalAdmins === 0 ? "superadmin" : "admin");
 
     const admin = await Admin.create({
       name,
@@ -153,6 +154,12 @@ exports.updateAdmin = async (req, res) => {
 
     if (req.body.password) {
       admin.password = await bcrypt.hash(req.body.password, 10);
+    }
+
+    if (req.admin && req.admin.role === "superadmin" && req.body.role) {
+      if (["admin", "superadmin"].includes(req.body.role)) {
+        admin.role = req.body.role;
+      }
     }
 
     await admin.save();

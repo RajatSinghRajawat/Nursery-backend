@@ -11,7 +11,7 @@ const proposalSchema = new mongoose.Schema(
         emailId: { type: String, required: true },
         address: { type: String, required: true },
         shipToAddress: { type: String, required: true },
-        description: { type: String, required: true },
+        description: { type: String, required: false },
         items: [
             {
                 product: {

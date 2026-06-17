@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const Order = require("../models/ordermodels");
 const Lead = require("../models/Lead");
@@ -107,6 +108,38 @@ const deleteLead = asyncHandler(async (req, res) => {
   res.json({ ok: true });
 });
 
+const createUserForAdmin = asyncHandler(async (req, res) => {
+  const { name, firstName, email, phone, password, gender, dateOfBirth, address } = req.body || {};
+  if (!email) {
+    const err = new Error("Email is required");
+    err.statusCode = 400;
+    throw err;
+  }
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    const err = new Error("User already exists with this email");
+    err.statusCode = 409;
+    throw err;
+  }
+
+  const passToHash = password || "12345678";
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(passToHash, salt);
+
+  const newUser = await User.create({
+    name: name || firstName || email.split("@")[0],
+    firstName: firstName || name || email.split("@")[0],
+    email,
+    password: hashedPassword,
+    phone: phone || null,
+    gender: gender || null,
+    dateOfBirth: dateOfBirth || null,
+    address: address || {},
+  });
+
+  res.status(201).json(newUser);
+});
+
 module.exports = {
   listUsersForAdmin,
   getUserOrdersForAdmin,
@@ -114,4 +147,5 @@ module.exports = {
   createLead,
   updateLeadStatus,
   deleteLead,
+  createUserForAdmin,
 };

@@ -19,6 +19,7 @@ const {
   listLeadsForAdmin,
   updateLeadStatus,
   deleteLead,
+  createUserForAdmin,
 } = require("../controllers/customerLeadController");
 const { isSuperAdmin, protect } = require("../middleware/authMiddleware");
 
@@ -42,6 +43,7 @@ router.get("/stats", protect, dashboardStats);
 router.get("/orders", protect, listAllOrders);
 router.patch("/orders/:id/status", protect, updateOrderStatus);
 router.get("/users", protect, listUsersForAdmin);
+router.post("/users", protect, createUserForAdmin);
 router.get("/users/:id/orders", protect, getUserOrdersForAdmin);
 router.get("/leads", protect, listLeadsForAdmin);
 router.put("/leads/:id", protect, updateLeadStatus);
