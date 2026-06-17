@@ -138,12 +138,73 @@ const logout = (req, res) => {
     .json({ message: "Logged out successfully" });
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user && req.user.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const { name, phone, gender, dateOfBirth, address } = req.body;
+
+    if (name !== undefined && (!name || name.trim() === "")) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+
+    const cleanPhone = phone && phone.trim() !== "" ? phone.trim() : null;
+    const cleanGender = gender && gender.trim() !== "" ? gender.trim() : null;
+    const cleanDob = dateOfBirth && dateOfBirth.trim() !== "" ? dateOfBirth.trim() : null;
+
+    if (cleanPhone && !/^\d{10}$/.test(cleanPhone)) {
+      return res.status(400).json({ message: "Phone number must be exactly 10 digits" });
+    }
+
+    if (cleanGender && !['Male', 'Female', 'Other'].includes(cleanGender)) {
+      return res.status(400).json({ message: "Gender must be Male, Female, or Other" });
+    }
+
+    const addressObj = address ? {
+      street: typeof address.street === 'string' ? address.street.trim() : '',
+      city: typeof address.city === 'string' ? address.city.trim() : '',
+      state: typeof address.state === 'string' ? address.state.trim() : '',
+      postalCode: typeof address.postalCode === 'string' ? address.postalCode.trim() : '',
+      country: typeof address.country === 'string' ? address.country.trim() : '',
+    } : undefined;
+
+    const updateFields = {};
+    if (name !== undefined) updateFields.name = name.trim();
+    updateFields.phone = cleanPhone;
+    updateFields.gender = cleanGender;
+    updateFields.dateOfBirth = cleanDob;
+    if (addressObj) {
+      updateFields.address = addressObj;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ user: updatedUser });
+  } catch (error) {
+    console.error("Update profile error:", error.message);
+    res.status(500).json({ message: error.message || "Server error" });
+  }
+};
+
 module.exports = {
   register,
   login,
   me,
   getAllusers,
   logout,
-
+  updateProfile,
 };
+
 
