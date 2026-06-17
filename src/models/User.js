@@ -50,7 +50,7 @@ const userSchema = new mongoose.Schema(
       street: { type: String, trim: true },
       city: { type: String, trim: true },
       state: { type: String, trim: true },
-      postalCode: { type: String, match: [/^\d{5}$/, 'Invalid postal code'] },
+      postalCode: { type: String,
       country: { type: String, trim: true },
     },
     createdAt: {
